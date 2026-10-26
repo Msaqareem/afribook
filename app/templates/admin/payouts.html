@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf %}
+{% block title %}Payouts · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-8">
+  <div>
+    <h1 class="text-xl font-semibold">Payouts</h1>
+    <p class="text-sm text-slate-600">Each business is owed the service price of every appointment that has ended and is not yet in a payout. The customer's payment fee is not part of it. Prepare a payout, send the money yourself, then record the reference.</p>
+  </div>
+
+  <section>
+    <h2 class="mb-2 font-semibold">Owed now</h2>
+    {% if not owed %}
+      <p class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">Nothing is owed.</p>
+    {% else %}
+      <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white">
+        {% for row in owed %}
+          <li class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
+            <div>
+              <p class="font-medium">{{ row.business.name }}</p>
+              <p class="text-slate-500">{{ row.count }} booking{{ "" if row.count == 1 else "s" }} · send to: {{ row.destination or "NOT SET (ask the owner to add payment details)" }}</p>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="font-semibold">{{ row.total|kes }}</span>
+              <form method="post" action="{{ url_for('admin.create_payout') }}">
+                {{ csrf() }}<input type="hidden" name="business_id" value="{{ row.business.id }}">
+                <button class="rounded-md bg-emerald-700 px-3 py-1.5 text-white hover:bg-emerald-800 disabled:opacity-40" {% if not row.destination %}disabled{% endif %}>Prepare payout</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2 class="mb-2 font-semibold">Payout history</h2>
+    {% if not payouts %}
+      <p class="text-sm text-slate-500">None yet.</p>
+    {% else %}
+      <ul class="divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white text-sm">
+        {% for p, b in payouts %}
+          <li class="flex items-center justify-between gap-3 px-4 py-3">
+            <div>
+              <a class="font-medium text-emerald-700 hover:underline" href="{{ url_for('admin.payout_detail', payout_id=p.id) }}">#{{ p.id }} · {{ b.name }}</a>
+              <p class="text-slate-500">{{ p.created_at|local_dt }} · {{ p.booking_count }} booking{{ "" if p.booking_count == 1 else "s" }}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold">{{ p.total_kes|kes }}</p>
+              <p class="{{ 'text-emerald-700' if p.status == 'paid' else ('text-amber-700' if p.status == 'pending' else 'text-slate-400') }}">{{ p.status|capitalize }}</p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

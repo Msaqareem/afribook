@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, text_input, submit %}
+{% block title %}Log in · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-4 text-xl font-semibold">Log in</h1>
+  <form method="post" class="space-y-4">
+    {{ csrf() }}
+    <input type="hidden" name="next" value="{{ next_url }}">
+    {{ text_input("Phone number", "phone", "tel", phone, "tel", "e.g. 0712 345 678", "tel") }}
+    {{ text_input("Password", "password", "password", "", "current-password") }}
+    {{ submit("Log in") }}
+  </form>
+  <div class="mt-4 flex justify-between text-sm">
+    <a class="text-emerald-700 hover:underline" href="{{ url_for('auth.password_reset_request') }}">Forgot password?</a>
+    <a class="text-emerald-700 hover:underline" href="{{ url_for('auth.register') }}">Create an account</a>
+  </div>
+</div>
+{% endblock %}

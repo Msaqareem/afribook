@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md text-center">
+  <p class="text-sm font-medium text-slate-500">{{ code }}</p>
+  <h1 class="mt-1 text-2xl font-semibold">{{ title }}</h1>
+  <p class="mt-2 text-slate-600">{{ message }}</p>
+  <a class="mt-6 inline-block text-emerald-700 hover:underline" href="{{ url_for('public.index') }}">Back to home</a>
+</div>
+{% endblock %}

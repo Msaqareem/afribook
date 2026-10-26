@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, time_picker %}
+{% block title %}Opening hours · AFRIBOOK{% endblock %}
+
+{% macro day_picker(prefix) %}
+  <fieldset>
+    <legend class="text-sm font-medium text-slate-700">Days</legend>
+    <div class="mt-2 flex flex-wrap gap-2">
+      {% for d, name, _w, _b in week %}
+        <label class="flex cursor-pointer items-center gap-1 rounded-md border border-slate-300 px-2 py-1 text-sm has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+          <input type="checkbox" name="days" value="{{ d }}" class="day-{{ prefix }}"> {{ name[:3] }}
+        </label>
+      {% endfor %}
+    </div>
+    <p class="mt-2 text-xs text-slate-500">
+      Quick select:
+      <button type="button" class="text-emerald-700 hover:underline" data-pick="{{ prefix }}" data-days="0,1,2,3,4">Mon-Fri</button> ·
+      <button type="button" class="text-emerald-700 hover:underline" data-pick="{{ prefix }}" data-days="0,1,2,3,4,5">Mon-Sat</button> ·
+      <button type="button" class="text-emerald-700 hover:underline" data-pick="{{ prefix }}" data-days="0,1,2,3,4,5,6">Every day</button>
+    </p>
+  </fieldset>
+{% endmacro %}
+
+{% macro time_pair(default_start, default_end) %}
+  <div class="flex flex-wrap gap-6">
+    {{ time_picker("start_time", default_start, "From") }}
+    {{ time_picker("end_time", default_end, "To") }}
+  </div>
+{% endmacro %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl space-y-8">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold">Opening hours</h1>
+    <a href="{{ url_for('availability.blocked_periods') }}" class="text-sm text-emerald-700 hover:underline">Holidays &amp; time off</a>
+  </div>
+  <p class="text-sm text-slate-600">Times are Kenya time (EAT). A day with no hours is closed. Customers can only book inside your opening hours.</p>
+
+  <section class="rounded-lg border border-slate-200 bg-white">
+    <ul class="divide-y divide-slate-200">
+      {% for d, name, windows, breaks in week %}
+        <li class="px-4 py-3">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <p class="w-28 font-medium">{{ name }}</p>
+            <div class="min-w-0 flex-1 space-y-1 text-sm">
+              {% if not windows %}
+                <p class="text-slate-400">Closed</p>
+              {% endif %}
+              {% for w in windows %}
+                <form method="post" action="{{ url_for('availability.delete_hours', entry_id=w.id) }}" class="flex items-center gap-3">
+                  {{ csrf() }}
+                  <span>{{ w.start_time|hhmm }} - {{ w.end_time|hhmm }}</span>
+                  <button type="submit" class="text-xs text-red-700 hover:underline">Remove</button>
+                </form>
+              {% endfor %}
+              {% for b in breaks %}
+                <form method="post" action="{{ url_for('availability.delete_break', entry_id=b.id) }}" class="flex items-center gap-3 text-slate-500">
+                  {{ csrf() }}
+                  <span>Break {{ b.start_time|hhmm }} - {{ b.end_time|hhmm }}</span>
+                  <button type="submit" class="text-xs text-red-700 hover:underline">Remove</button>
+                </form>
+              {% endfor %}
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="rounded-lg border border-slate-200 bg-white p-5">
+    <h2 class="font-semibold">Add opening hours</h2>
+    <p class="mb-3 text-sm text-slate-600">Pick the days, then the time. For a split day (for example 8-12 and 14-18) add two ranges.</p>
+    <form method="post" action="{{ url_for('availability.add_hours') }}" class="space-y-4">
+      {{ csrf() }}
+      {{ day_picker("hours") }}
+      {{ time_pair("08:00", "18:00") }}
+      <button type="submit" class="rounded-md bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">Save hours</button>
+    </form>
+  </section>
+
+  <section class="rounded-lg border border-slate-200 bg-white p-5">
+    <h2 class="font-semibold">Add a daily break</h2>
+    <p class="mb-3 text-sm text-slate-600">Customers cannot book across a break, for example lunch.</p>
+    <form method="post" action="{{ url_for('availability.add_break') }}" class="space-y-4">
+      {{ csrf() }}
+      {{ day_picker("break") }}
+      {{ time_pair("13:00", "14:00") }}
+      <button type="submit" class="rounded-md bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">Save break</button>
+    </form>
+  </section>
+
+  <section class="rounded-lg border border-slate-200 bg-white p-5">
+    <h2 class="font-semibold">Check booking times</h2>
+    <p class="mb-3 text-sm text-slate-600">Pick a service and a date to see the start times customers will be offered.</p>
+    {% if not services %}
+      <p class="text-sm text-slate-500">Add a service first.</p>
+    {% else %}
+      <form method="get" action="{{ url_for('availability.index') }}" class="grid gap-3 sm:grid-cols-3">
+        <select name="service_id" required class="rounded-md border border-slate-300 bg-white px-3 py-2">
+          {% for s in services %}
+            <option value="{{ s.id }}" {% if preview_service and preview_service.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.duration_minutes|duration }})</option>
+          {% endfor %}
+        </select>
+        <input type="date" name="date" required value="{{ preview_day.isoformat() if preview_day else tomorrow }}"
+               class="rounded-md border border-slate-300 bg-white px-3 py-2">
+        <button type="submit" class="rounded-md border border-slate-300 px-4 py-2 hover:bg-slate-100">Check</button>
+      </form>
+      {% if preview_slots is not none %}
+        <p class="mt-4 text-sm font-medium">{{ preview_day.strftime("%A, %d %B %Y") }}</p>
+        {% if preview_slots %}
+          {% set groups = [("Morning", preview_slots|selectattr("hour", "lt", 12)|list),
+                           ("Afternoon", preview_slots|selectattr("hour", "ge", 12)|selectattr("hour", "lt", 17)|list),
+                           ("Evening", preview_slots|selectattr("hour", "ge", 17)|list)] %}
+          {% for label, items in groups if items %}
+            <p class="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ label }}</p>
+            <div class="mt-1 flex flex-wrap gap-2">
+              {% for slot in items %}
+                <span class="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-sm">{{ slot|hhmm }}</span>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="mt-1 text-sm text-slate-600">No times available. The day may be closed, fully blocked, in the past, or too far ahead.</p>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  </section>
+</div>
+<script>
+  document.querySelectorAll("[data-pick]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var wanted = btn.dataset.days.split(",");
+      document.querySelectorAll(".day-" + btn.dataset.pick).forEach(function (box) {
+        box.checked = wanted.indexOf(box.value) !== -1;
+      });
+    });
+  });
+</script>
+{% endblock %}

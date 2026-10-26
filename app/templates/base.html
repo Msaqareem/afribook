@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}AFRIBOOK{% endblock %}</title>
+  {# Tailwind via CDN for development. Replace with a compiled build before production (Bucket 10). #}
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+      <a href="{{ url_for('public.index') }}" class="text-lg font-semibold tracking-tight">AFRIBOOK</a>
+      <nav class="flex items-center gap-4 text-sm">
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_admin %}
+            <a class="hover:underline" href="{{ url_for('admin.home') }}">Admin</a>
+            <a class="hover:underline" href="{{ url_for('admin.payouts') }}">Payouts</a>
+            <a class="hover:underline" href="{{ url_for('admin.payment_review') }}">Payment review</a>
+          {% else %}
+            <a class="hover:underline" href="{{ url_for('owner.dashboard') }}">Dashboard</a>
+            <a class="hover:underline" href="{{ url_for('owner.profile') }}">Business</a>
+            <a class="hover:underline" href="{{ url_for('catalog.list_services') }}">Services</a>
+            <a class="hover:underline" href="{{ url_for('availability.index') }}">Availability</a>
+            <a class="hover:underline" href="{{ url_for('owner.payment') }}">Payments</a>
+          {% endif %}
+          <form method="post" action="{{ url_for('auth.logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="rounded-md border border-slate-300 px-3 py-1.5 hover:bg-slate-100">Log out</button>
+          </form>
+        {% else %}
+          <a class="hover:underline" href="{{ url_for('auth.login') }}">Log in</a>
+          <a class="rounded-md bg-emerald-700 px-3 py-1.5 text-white hover:bg-emerald-800" href="{{ url_for('auth.register') }}">Sign up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-4 py-8">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mx-auto mb-6 max-w-md space-y-2">
+          {% for category, message in messages %}
+            <div role="alert" class="rounded-md border px-4 py-3 text-sm
+              {% if category == 'error' %}border-red-200 bg-red-50 text-red-800
+              {% elif category == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-800
+              {% else %}border-slate-200 bg-white text-slate-700{% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    document.querySelectorAll(".time-picker").forEach(function (box) {
+      var h = box.querySelector(".tp-h"), m = box.querySelector(".tp-m"), a = box.querySelector(".tp-a"),
+          out = box.querySelector("input[type=hidden]");
+      function sync() {
+        var hh = parseInt(h.value, 10) % 12 + (a.value === "PM" ? 12 : 0);
+        out.value = String(hh).padStart(2, "0") + ":" + String(parseInt(m.value, 10)).padStart(2, "0");
+      }
+      [h, m, a].forEach(function (el) { el.addEventListener("change", sync); });
+      sync();
+    });
+  </script>
+</body>
+</html>

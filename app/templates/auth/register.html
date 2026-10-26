@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, text_input, submit %}
+{% block title %}Sign up · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-1 text-xl font-semibold">Create your business account</h1>
+  <p class="mb-4 text-sm text-slate-600">We will text a code to your phone to verify it.</p>
+  <form method="post" class="space-y-4">
+    {{ csrf() }}
+    {{ text_input("Phone number", "phone", "tel", phone, "tel", "Used to log in and to receive booking SMS.", "tel") }}
+    {{ text_input("Password", "password", "password", "", "new-password", "At least 8 characters.") }}
+    {{ text_input("Confirm password", "confirm_password", "password", "", "new-password") }}
+    {{ submit("Sign up") }}
+  </form>
+  <p class="mt-4 text-sm">Already registered? <a class="text-emerald-700 hover:underline" href="{{ url_for('auth.login') }}">Log in</a></p>
+</div>
+{% endblock %}

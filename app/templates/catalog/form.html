@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, text_input, textarea_input, checkbox_input, submit %}
+{% block title %}{{ "Edit service" if service else "Add service" }} · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-4 text-xl font-semibold">{{ "Edit service" if service else "Add a service" }}</h1>
+  <form method="post" class="space-y-4">
+    {{ csrf() }}
+    {{ text_input("Service name", "name", "text", values.get("name", ""), "off", "Example: Haircut, Full set of braids, Oil change.", "", true, 80) }}
+    {{ textarea_input("Description (optional)", "description", values.get("description", ""), "Up to 300 characters.", 300, 2) }}
+    {{ text_input("Price (KES)", "price_kes", "text", values.get("price_kes", ""), "off", "Whole shillings, for example 1500. This is what the customer pays by M-Pesa.", "numeric", true, 9) }}
+    {{ text_input("Duration (minutes)", "duration_minutes", "text", values.get("duration_minutes", ""), "off", "How long it takes, 5 to 480. Example: 45, 60, 90.", "numeric", true, 3) }}
+    {{ checkbox_input("Available for booking", "is_active", values.get("is_active") == "on", "Untick to hide this service without deleting it.") }}
+    {{ submit("Save service") }}
+  </form>
+  <p class="mt-4 text-sm"><a class="text-emerald-700 hover:underline" href="{{ url_for('catalog.list_services') }}">Back to services</a></p>
+</div>
+{% endblock %}

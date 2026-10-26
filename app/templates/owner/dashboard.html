@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · AFRIBOOK{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold">{{ business.name if business else "Welcome to AFRIBOOK" }}</h1>
+
+{% if not business %}
+  <p class="mt-2 text-slate-600">Your account is ready. Set up your business to get your booking page.</p>
+  <a href="{{ url_for('owner.profile') }}" class="mt-4 inline-block rounded-md bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">Set up my business</a>
+{% else %}
+  <p class="mt-1 text-sm text-slate-600">
+    Your page:
+    {% if business.is_listed %}
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('public.business_page', slug=business.slug) }}">afribook.co.ke/{{ business.slug }}</a>
+    {% else %}
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('public.business_page', slug=business.slug) }}">afribook.co.ke/{{ business.slug }}</a>
+      <span class="ml-1 rounded bg-slate-200 px-2 py-0.5 text-xs">{{ "Suspended" if business.status == "suspended" else "Hidden" }}</span>
+    {% endif %}
+  </p>
+
+  <ul class="mt-6 max-w-xl divide-y divide-slate-200 rounded-lg border border-slate-200 bg-white text-sm">
+    <li class="flex items-center justify-between px-4 py-3">
+      <span>Business profile</span>
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('owner.profile') }}">Edit</a>
+    </li>
+    <li class="flex items-center justify-between px-4 py-3">
+      <span>Payment details
+        {% if business.payment_account %}<span class="ml-1 text-slate-500">({{ business.payment_account.payment_type|capitalize }} {{ business.payment_account.shortcode }})</span>{% endif %}
+      </span>
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('owner.payment') }}">{{ "Edit" if business.payment_account else "Add" }}</a>
+    </li>
+    <li class="flex items-center justify-between px-4 py-3">
+      <span>Services
+        <span class="ml-1 text-slate-500">({{ service_active }} active{% if service_total != service_active %}, {{ service_total - service_active }} inactive{% endif %})</span>
+      </span>
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('catalog.list_services') }}">{{ "Manage" if service_total else "Add" }}</a>
+    </li>
+    <li class="flex items-center justify-between px-4 py-3">
+      <span>Opening hours
+        <span class="ml-1 text-slate-500">({{ open_days }} day{{ "" if open_days == 1 else "s" }} open per week)</span>
+      </span>
+      <a class="text-emerald-700 hover:underline" href="{{ url_for('availability.index') }}">{{ "Manage" if open_days else "Add" }}</a>
+    </li>
+  </ul>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Book {{ service.name }} · {{ business.name }}{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-2xl space-y-5">
+  <a href="{{ url_for('public.business_page', slug=business.slug) }}" class="text-sm text-emerald-700 hover:underline">&larr; {{ business.name }}</a>
+  <div>
+    <h1 class="text-xl font-semibold">{{ service.name }}</h1>
+    <p class="text-sm text-slate-600">{{ service.duration_minutes|duration }} · {{ service.price_kes|kes }} <span class="text-slate-500">+ {{ fee_label }} payment fee, shown before you pay</span></p>
+  </div>
+
+  <div class="flex gap-2 overflow-x-auto pb-1">
+    {% for d in strip %}
+      <a href="{{ url_for('bookings.slots', slug=business.slug, service_id=service.id, date=d.isoformat()) }}"
+         class="min-w-[4.5rem] rounded-md border px-3 py-2 text-center text-sm {{ 'border-emerald-600 bg-emerald-50 font-semibold' if d == day else 'border-slate-300 bg-white hover:bg-slate-50' }}">
+        <span class="block text-xs text-slate-500">{{ "Today" if d == today else d.strftime("%a") }}</span>{{ d.strftime("%d %b") }}
+      </a>
+    {% endfor %}
+  </div>
+  <form method="get" class="flex items-center gap-2 text-sm">
+    <input type="hidden" name="service_id" value="{{ service.id }}">
+    <label for="date" class="text-slate-600">Another date:</label>
+    <input id="date" type="date" name="date" value="{{ day.isoformat() }}" min="{{ today.isoformat() }}" max="{{ max_day.isoformat() }}"
+           class="rounded-md border border-slate-300 bg-white px-2 py-1">
+    <button class="rounded-md border border-slate-300 px-3 py-1 hover:bg-slate-100">Go</button>
+  </form>
+
+  <section class="rounded-lg border border-slate-200 bg-white p-5">
+    <h2 class="font-semibold">{{ day.strftime("%A, %d %B %Y") }}</h2>
+    {% if has_slots %}
+      {% for label, items in groups %}
+        <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ label }}</p>
+        <div class="mt-2 flex flex-wrap gap-2">
+          {% for slot in items %}
+            <a href="{{ url_for('bookings.book', slug=business.slug, service_id=service.id, start=slot.timestamp()|int) }}"
+               class="rounded-md border border-emerald-300 bg-white px-3 py-2 text-sm hover:bg-emerald-50">{{ slot|hhmm }}</a>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="mt-2 text-sm text-slate-600">No times available on this day. Try another date.</p>
+    {% endif %}
+  </section>
+  <p class="text-xs text-slate-500">Times are Kenya time (EAT).</p>
+</div>
+{% endblock %}

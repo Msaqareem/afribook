@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf %}
+{% block title %}Payment review · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-3xl space-y-6">
+  <div>
+    <h1 class="text-xl font-semibold">Payments needing review</h1>
+    <p class="text-sm text-slate-600">The customer's money arrived but no booking was created (wrong amount, or the time was taken after the hold ended). Decide: refund the customer, or arrange another time with the business. Refunds are sent by hand. Then record what you did.</p>
+  </div>
+  {% if not items %}
+    <p class="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-center text-sm text-slate-500">Nothing to review.</p>
+  {% endif %}
+  {% for attempt, business in items %}
+    <section class="rounded-lg border border-red-200 bg-white p-5 text-sm">
+      <p class="font-semibold">{{ business.name }} · {{ attempt.amount_kes|kes }} · {{ attempt.customer_phone }}</p>
+      <p class="mt-1 text-slate-600">Reason: {{ attempt.result_description }}</p>
+      <p class="text-slate-600">M-Pesa receipt: {{ attempt.mpesa_receipt or "none recorded" }} · Provider reference: {{ attempt.provider_reference }} · Our reference: {{ attempt.our_reference }}</p>
+      <form method="post" action="{{ url_for('admin.payment_resolve', attempt_id=attempt.id) }}" class="mt-3 flex flex-wrap items-end gap-3">
+        {{ csrf() }}
+        <div class="grow">
+          <label class="block text-sm font-medium" for="note{{ attempt.id }}">How was it resolved? (for example the refund reference)</label>
+          <input id="note{{ attempt.id }}" name="note" required maxlength="200" class="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2">
+        </div>
+        <button class="rounded-md bg-emerald-700 px-4 py-2 text-white hover:bg-emerald-800">Mark resolved</button>
+      </form>
+    </section>
+  {% endfor %}
+</div>
+{% endblock %}

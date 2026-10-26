@@ -1,0 +1,74 @@
+{% macro csrf() -%}
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+{%- endmacro %}
+
+{% macro text_input(label, name, type="text", value="", autocomplete="off", hint="", inputmode="", required=true, maxlength="") -%}
+<div>
+  <label for="{{ name }}" class="block text-sm font-medium text-slate-700">{{ label }}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" autocomplete="{{ autocomplete }}"
+         {% if inputmode %}inputmode="{{ inputmode }}"{% endif %}
+         {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+         {% if required %}required{% endif %}
+         class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+  {% if hint %}<p class="mt-1 text-xs text-slate-500">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{# options: list of (value, label) pairs #}
+{% macro select_input(label, name, options, selected="", hint="", placeholder="Select...") -%}
+<div>
+  <label for="{{ name }}" class="block text-sm font-medium text-slate-700">{{ label }}</label>
+  <select id="{{ name }}" name="{{ name }}" required
+          class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+    <option value="" disabled {% if not selected %}selected{% endif %}>{{ placeholder }}</option>
+    {% for value, text in options %}
+      <option value="{{ value }}" {% if (selected|string) == (value|string) %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<p class="mt-1 text-xs text-slate-500">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro textarea_input(label, name, value="", hint="", maxlength="", rows=3) -%}
+<div>
+  <label for="{{ name }}" class="block text-sm font-medium text-slate-700">{{ label }}</label>
+  <textarea id="{{ name }}" name="{{ name }}" rows="{{ rows }}" {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+            class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">{{ value }}</textarea>
+  {% if hint %}<p class="mt-1 text-xs text-slate-500">{{ hint }}</p>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro checkbox_input(label, name, checked=false, hint="") -%}
+<div class="flex items-start gap-2">
+  <input id="{{ name }}" name="{{ name }}" type="checkbox" {% if checked %}checked{% endif %}
+         class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600">
+  <label for="{{ name }}" class="text-sm text-slate-700">{{ label }}
+    {% if hint %}<span class="block text-xs text-slate-500">{{ hint }}</span>{% endif %}
+  </label>
+</div>
+{%- endmacro %}
+
+{% macro submit(label) -%}
+<button type="submit" class="w-full rounded-md bg-emerald-700 px-4 py-2 font-medium text-white hover:bg-emerald-800">{{ label }}</button>
+{%- endmacro %}
+
+{% macro time_picker(name, value="09:00", label="") -%}
+  {% set h24 = value[:2]|int %}{% set mm = value[3:5]|int %}
+  {% set h12 = (h24 % 12) or 12 %}{% set ap = "PM" if h24 >= 12 else "AM" %}
+  <div>
+    {% if label %}<span class="block text-sm font-medium text-slate-700">{{ label }}</span>{% endif %}
+    <div class="time-picker mt-1 flex items-center gap-1" data-target="{{ name }}">
+      <select aria-label="{{ label }} hour" class="tp-h rounded-md border border-slate-300 bg-white px-2 py-2">
+        {% for h in range(1, 13) %}<option value="{{ h }}" {% if h == h12 %}selected{% endif %}>{{ h }}</option>{% endfor %}
+      </select>
+      <span>:</span>
+      <select aria-label="{{ label }} minutes" class="tp-m rounded-md border border-slate-300 bg-white px-2 py-2">
+        {% for m in range(0, 60, 5) %}<option value="{{ m }}" {% if m == mm %}selected{% endif %}>{{ "%02d"|format(m) }}</option>{% endfor %}
+      </select>
+      <select aria-label="{{ label }} AM or PM" class="tp-a rounded-md border border-slate-300 bg-white px-2 py-2">
+        <option {% if ap == "AM" %}selected{% endif %}>AM</option><option {% if ap == "PM" %}selected{% endif %}>PM</option>
+      </select>
+      <input type="hidden" name="{{ name }}" value="{{ "%02d:%02d"|format(h24, mm) }}">
+    </div>
+  </div>
+{%- endmacro %}

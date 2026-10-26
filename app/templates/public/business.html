@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ business.name }} · AFRIBOOK{% endblock %}
+{% block content %}
+{% if preview %}
+  <div class="mx-auto mb-6 max-w-2xl rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    Only you can see this page.
+    {% if business.status == "suspended" %}Your business is suspended; contact support.{% else %}It is hidden from the public.{% endif %}
+  </div>
+{% endif %}
+<article class="mx-auto max-w-2xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <p class="text-sm font-medium text-emerald-700">{{ business.category.name }}</p>
+  <h1 class="mt-1 text-2xl font-semibold">{{ business.name }}</h1>
+  <p class="mt-1 text-sm text-slate-600">{{ business.address }}, {{ business.county }}</p>
+  {% if business.description %}
+    <p class="mt-4 whitespace-pre-line text-slate-700">{{ business.description }}</p>
+  {% endif %}
+  <h2 class="mt-6 text-lg font-semibold">Services</h2>
+  {% if services %}
+    <ul class="mt-2 divide-y divide-slate-200 rounded-md border border-slate-200">
+      {% for s in services %}
+        <li class="px-4 py-3">
+          <div class="flex items-baseline justify-between gap-3">
+            <p class="font-medium">{{ s.name }}</p>
+            <p class="whitespace-nowrap text-sm font-medium">{{ s.price_kes|kes }}</p>
+          </div>
+          <p class="text-sm text-slate-600">{{ s.duration_minutes|duration }}</p>
+          {% if s.description %}<p class="mt-1 text-sm text-slate-500">{{ s.description }}</p>{% endif %}
+          {% if not preview %}
+            <a href="{{ url_for('bookings.slots', slug=business.slug, service_id=s.id) }}"
+               class="mt-2 inline-block rounded-md bg-emerald-700 px-3 py-1.5 text-sm text-white hover:bg-emerald-800">Book</a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="mt-2 text-sm text-slate-600">No services are listed yet.</p>
+  {% endif %}
+  <h2 class="mt-6 text-lg font-semibold">Opening hours</h2>
+  <dl class="mt-2 divide-y divide-slate-200 rounded-md border border-slate-200 text-sm">
+    {% for name, windows in hours %}
+      <div class="flex justify-between gap-3 px-4 py-2">
+        <dt class="font-medium">{{ name }}</dt>
+        <dd class="text-right {{ '' if windows else 'text-slate-400' }}">
+          {% if windows %}{% for w in windows %}{{ w.start_time|hhmm }} - {{ w.end_time|hhmm }}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}Closed{% endif %}
+        </dd>
+      </div>
+    {% endfor %}
+  </dl>
+</article>
+{% endblock %}

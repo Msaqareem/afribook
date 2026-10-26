@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, text_input, select_input, textarea_input, checkbox_input, submit %}
+{% block title %}Business profile · AFRIBOOK{% endblock %}
+{% block content %}
+<div class="mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-1 text-xl font-semibold">{{ "Business profile" if business else "Set up your business" }}</h1>
+  <p class="mb-4 text-sm text-slate-600">This is what customers see on your booking page.</p>
+  <form method="post" class="space-y-4">
+    {{ csrf() }}
+    {{ text_input("Business name", "name", "text", values.get("name", ""), "organization", "", "", true, 80) }}
+    <div>
+      <label for="slug" class="block text-sm font-medium text-slate-700">Web address</label>
+      <div class="mt-1 flex rounded-md border border-slate-300 bg-white shadow-sm focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-600">
+        <span class="flex items-center border-r border-slate-300 bg-slate-50 px-3 text-sm text-slate-500">afribook.co.ke/</span>
+        <input id="slug" name="slug" type="text" value="{{ values.get('slug', '') }}" required minlength="3" maxlength="40"
+               autocomplete="off" autocapitalize="none" spellcheck="false"
+               class="block w-full rounded-r-md px-3 py-2 focus:outline-none">
+      </div>
+      <p class="mt-1 text-xs text-slate-500">Lowercase letters, numbers and hyphens, 3-40 characters.
+        {% if business %}Changing it breaks links you have already shared.{% endif %}</p>
+    </div>
+    {{ select_input("Category", "category_id", category_options, values.get("category_id", ""), "", "Select a category") }}
+    {{ select_input("County", "county", county_options, values.get("county", ""), "", "Select a county") }}
+    {{ text_input("Location", "address", "text", values.get("address", ""), "street-address", "Help customers find you: area, street or landmark. Example: Mpaka Road, Westlands, near Sarit Centre.", "", true, 200) }}
+    {{ text_input("Phone for booking SMS", "contact_phone", "tel", values.get("contact_phone", ""), "tel", "We text booking confirmations and reminders here.", "tel") }}
+    {{ textarea_input("Description (optional)", "description", values.get("description", ""), "Up to 500 characters.", 500) }}
+    {{ checkbox_input("Show my business on AFRIBOOK", "is_public", values.get("is_public") == "on", "Untick to hide your page from the public while you set up.") }}
+    {{ submit("Save profile") }}
+  </form>
+</div>
+<script>
+  // Suggest a web address from the business name until the owner edits it.
+  (function () {
+    var name = document.getElementById("name"), slug = document.getElementById("slug");
+    if (!name || !slug || slug.value) return;
+    var touched = false;
+    slug.addEventListener("input", function () { touched = true; });
+    name.addEventListener("input", function () {
+      if (touched) return;
+      slug.value = name.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+    });
+  })();
+</script>
+{% endblock %}

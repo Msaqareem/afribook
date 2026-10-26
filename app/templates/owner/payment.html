@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% from "_forms.html" import csrf, submit %}
+{% block title %}Payment details · AFRIBOOK{% endblock %}
+{% block content %}
+{% set is_paybill = values.get("payment_type") == paybill %}
+<div class="mx-auto max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+  <h1 class="mb-1 text-xl font-semibold">Payment details</h1>
+  <p class="mb-4 text-sm text-slate-600">
+    Where AFRIBOOK sends your money. Customers pay through AFRIBOOK by M-Pesa (they enter their PIN only on the
+    Safaricom prompt on their own phone; we never see it). We then pay you the full service price for each
+    appointment, weekly, once the appointment has passed. Customers pay a separate, visible payment fee on top,
+    so nothing is deducted from your price.
+  </p>
+  {% if account %}
+    <p class="mb-4 text-sm text-slate-600">Status: <span class="font-medium">{{ account.status|capitalize }}</span></p>
+  {% endif %}
+
+  <form method="post" class="space-y-5">
+    {{ csrf() }}
+
+    <fieldset>
+      <legend class="block text-sm font-medium text-slate-700">How do customers pay you?</legend>
+      <div class="mt-2 grid gap-3 sm:grid-cols-2">
+        <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-300 p-3 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+          <input type="radio" name="payment_type" value="{{ till }}" class="mt-1" {% if not is_paybill %}checked{% endif %}>
+          <span><span class="block text-sm font-medium">Till number</span>
+            <span class="block text-xs text-slate-500">Buy Goods. Customers pay your till directly.</span></span>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 rounded-md border border-slate-300 p-3 has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50">
+          <input type="radio" name="payment_type" value="{{ paybill }}" class="mt-1" {% if is_paybill %}checked{% endif %}>
+          <span><span class="block text-sm font-medium">Paybill</span>
+            <span class="block text-xs text-slate-500">Business number plus an account number.</span></span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div>
+      <label for="shortcode" id="shortcode-label" class="block text-sm font-medium text-slate-700">
+        {{ "Paybill business number" if is_paybill else "Till number" }}
+      </label>
+      <input id="shortcode" name="shortcode" type="text" inputmode="numeric" autocomplete="off" required maxlength="10"
+             value="{{ values.get('shortcode', '') }}"
+             class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+      <p class="mt-1 text-xs text-slate-500">5 to 7 digits.</p>
+    </div>
+
+    {# Shown only for Paybill. For Till it is hidden and not submitted. #}
+    <div id="reference-box" class="{{ '' if is_paybill else 'hidden' }}">
+      <label for="account_reference_template" class="block text-sm font-medium text-slate-700">Account number (optional)</label>
+      <input id="account_reference_template" name="account_reference_template" type="text" maxlength="64" autocomplete="off"
+             value="{{ values.get('account_reference_template', '') }}" {% if not is_paybill %}disabled{% endif %}
+             class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 shadow-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+      <p class="mt-1 text-xs text-slate-500">
+        The account number customers' payments are filed under. Leave blank to use each booking's reference automatically.
+        Example: <code>AFRIBOOK-{booking_ref}</code>
+      </p>
+    </div>
+
+    {{ submit("Save payment details") }}
+  </form>
+</div>
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name="payment_type"]');
+    var box = document.getElementById("reference-box");
+    var ref = document.getElementById("account_reference_template");
+    var label = document.getElementById("shortcode-label");
+    function update() {
+      var checked = document.querySelector('input[name="payment_type"]:checked');
+      var paybill = checked && checked.value === "{{ paybill }}";
+      box.classList.toggle("hidden", !paybill);
+      ref.disabled = !paybill;
+      label.textContent = paybill ? "Paybill business number" : "Till number";
+    }
+    radios.forEach(function (r) { r.addEventListener("change", update); });
+    update();
+  })();
+</script>
+{% endblock %}
